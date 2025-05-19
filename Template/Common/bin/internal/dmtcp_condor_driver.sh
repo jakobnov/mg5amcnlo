@@ -3,10 +3,18 @@
 export PATH="$HOME/dmtcp/bin:$PATH"
 export LD_LIBRARY_PATH="$HOME/dmtcp/lib:$LD_LIBRARY_PATH"
 
-export DMTCP_CHECKPOINT_DIR="$INITIAL_DIR/dmtcp_$CONDOR_ID"
-mkdir -p "$DMTCP_CHECKPOINT_DIR"
+if (( EXIT_AFTER_CHECKPOINT )); then
+    echo "$(date) - No shared disk mode" >> "$INITIAL_DIR/condor_$CONDOR_ID.out"
+    export DMTCP_CHECKPOINT_DIR="$PWD/dmtcp_$CONDOR_ID"
+    mkdir -p "$DMTCP_CHECKPOINT_DIR"
+    dmtcp_coordinator -i $CHECKPOINTING_FREQUENCY --daemon --exit-on-last --exit-after-ckpt -p 0 --port-file "$DMTCP_CHECKPOINT_DIR/dmtcp.port" 1>/dev/null 2>&1
+else
+    echo "$(date) - Shared disk mode" >> "$INITIAL_DIR/condor_$CONDOR_ID.out"
+    export DMTCP_CHECKPOINT_DIR="$INITIAL_DIR/dmtcp_$CONDOR_ID"
+    mkdir -p "$DMTCP_CHECKPOINT_DIR"
+    dmtcp_coordinator -i $CHECKPOINTING_FREQUENCY --daemon --exit-on-last -p 0 --port-file "$DMTCP_CHECKPOINT_DIR/dmtcp.port" 1>/dev/null 2>&1
+fi
 
-dmtcp_coordinator -i 86400 --daemon --exit-on-last -p 0 --port-file "$DMTCP_CHECKPOINT_DIR/dmtcp.port" 1>/dev/null 2>&1
 export DMTCP_COORD_HOST=$(hostname)
 export DMTCP_COORD_PORT=$(cat "$DMTCP_CHECKPOINT_DIR/dmtcp.port")
 
@@ -35,9 +43,11 @@ timeout() {
 }
 
 # Trap signals
-trap "timeout" SIGTERM
+if (( ! EXIT_AFTER_CHECKPOINT )); then
+    trap "timeout" SIGTERM
+    cd "$INITIAL_DIR"
+fi
 
-cd "$INITIAL_DIR"
 if [[ -e "$DMTCP_CHECKPOINT_DIR/dmtcp_restart_script.sh" ]]; then
     echo "$(date) - Resuming from checkpoint" >> "$INITIAL_DIR/condor_$CONDOR_ID.out"
     /bin/bash "$DMTCP_CHECKPOINT_DIR/dmtcp_restart_script.sh" -h $DMTCP_COORD_HOST -p $DMTCP_COORD_PORT >> "$INITIAL_DIR/condor_$CONDOR_ID.out" &

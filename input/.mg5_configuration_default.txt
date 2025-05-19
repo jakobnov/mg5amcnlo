@@ -118,6 +118,8 @@
 # cluster_size = 150 
 # cluster_walltime =  # time in minute for slurm and second for condor (not supported for other scheduller)
 # checkpointing = True # enable checkpointing
+# checkpointing_frequency = # frequency of a regular checkpoint creation in seconds
+# exit_after_checkpoint = True # exit after periodic checkpoint (this setting avoids the need for shared disk usage with Condor)
 # cluster_requirement = x86_64-v4 # selected microarchitecture for checkpointing consistency
 # cluster_vacatetime = 120 # time in seconds for checkpoint creation before the job eviction
 

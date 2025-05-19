@@ -676,7 +676,8 @@ class CommonRunCmd(HelpToCmd, CheckValidForCmd, cmd.Cmd):
                        'cluster_status_update': (600, 30),
                        'cluster_nb_retry':1,
                        'cluster_local_path': None,
-                       'cluster_retry_wait':300}
+                       'cluster_retry_wait':300,
+                       'checkpointing_frequency': '86400',}
 
     options_madgraph= {'stdout_level':None}
 
@@ -3552,7 +3553,7 @@ class CommonRunCmd(HelpToCmd, CheckValidForCmd, cmd.Cmd):
                 raise self.InvalidCmd('run_mode should be 0, 1 or 2.')
             self.cluster_mode = int(args[1])
             self.options['run_mode'] =  self.cluster_mode
-        elif args[0] in  ['cluster_type', 'cluster_queue', 'cluster_temp_path', 'cluster_vacatetime']:
+        elif args[0] in  ['cluster_type', 'cluster_queue', 'cluster_temp_path', 'cluster_vacatetime', 'checkpointing_frequency']:
             if args[1] == 'None':
                 args[1] = None
             self.options[args[0]] = args[1]
