@@ -2624,7 +2624,8 @@ class CompleteForCmd(cmd.CompleteCmd):
                 return self.list_completion(text, [str(i) for i in range(3)] + ['default'])
             elif args[1] == 'cluster_type':
                 return self.list_completion(text, list(cluster.from_name.keys()) + ['default'])
-            elif args[1] in ['cluster_queue', 'cluster_walltime']:
+            elif args[1] in ['cluster_queue', 'cluster_walltime',\
+                             'cluster_requirement', 'cluster_vacatetime']:
                 return []
             elif args[1] == 'automatic_html_opening':
                 return self.list_completion(text, ['False', 'True', 'default'])
@@ -2915,7 +2916,8 @@ class MadGraphCmd(HelpToCmd, CheckValidForCmd, CompleteForCmd, CmdExtended):
     # The targets below are installed using the HEPToolsInstaller.py script
     _advanced_install_opts = ['pythia8','zlib','boost','lhapdf6','lhapdf5','collier',
                               'hepmc','mg5amc_py8_interface','ninja','oneloop','MadAnalysis5',
-                              'yoda', 'rivet', 'fastjet', 'fjcontrib', 'contur', 'cmake', 'eMELA']
+                              'yoda', 'rivet', 'fastjet', 'fjcontrib', 'contur', 'cmake', 'eMELA',
+                              'DMTCP']
 
     _install_opts.extend(_advanced_install_opts)
 
@@ -2970,16 +2972,21 @@ class MadGraphCmd(HelpToCmd, CheckValidForCmd, CompleteForCmd, CmdExtended):
                        'f2py_compiler_py2':None,
                        'f2py_compiler_py3':None,
                        'cpp_compiler':None,
+                       'checkpointing': False,
                        'cluster_type': 'condor',
                        'cluster_queue': None,
                        'cluster_status_update': (600, 30),
                        'cluster_walltime': None,
+                       'cluster_requirement': None,
+                       'cluster_vacatetime': '120',
+                       'enforce_shared_disk': False,
                        'fastjet':'fastjet-config',
                        'eMELA':'eMELA-config',
                        'golem':'auto',
                        'samurai':None,
                        'ninja':'./HEPTools/lib',
                        'collier':'./HEPTools/lib',
+                       'dmtcp': None,
                        'lhapdf':'lhapdf-config',
                        'pineappl':'pineappl',
                        'lhapdf_py2': None,
@@ -6522,7 +6529,7 @@ MG5aMC that supports quadruple precision (typically g++ based on gcc 4.6+).""")
                 return self.do_install('%s --source=%s' % (' '.join(args), othersource), 
                                        paths, additional_options) 
             else:
-                if 'xxx' in advertisements[name][0]:
+                if name in advertisements and 'xxx' in advertisements[name][0]:
                     logger.warning("Program not yet released. Please try later")
                 else:
                     raise Exception("Online server are corrupted. No tarball available for %s" % name)
@@ -7698,7 +7705,9 @@ in the MG5aMC option 'samurai' (instead of leaving it to its default 'auto')."""
                             if '_path' in key and os.path.basename(self.options[key]) == 'None':
                                 continue
                             to_define[key] = self.options[key]
-                        elif key in ['cluster_queue', 'cluster_walltime'] and self.options[key] is None:
+                        elif key in ['cluster_queue', 'cluster_walltime',\
+                                     'cluster_requirement', 'cluster_vacatetime']\
+                                     and self.options[key] is None:
                             to_define[key] = self.options[key]
     
                 if '--all' in args:
@@ -8086,7 +8095,8 @@ in the MG5aMC option 'samurai' (instead of leaving it to its default 'auto')."""
             self.options[args[0]] = tmp
         elif args[0] in ['zerowidth_tchannel']:
             self.options[args[0]] = banner_module.ConfigFile.format_variable(args[1], bool, args[0])
-        elif args[0] in ['cluster_queue', 'cluster_walltime']:
+        elif args[0] in ['cluster_queue', 'cluster_walltime', 'checkpointing',\
+                         'cluster_requirement', 'cluster_vacatetime', 'enforce_shared_disk']:
             self.options[args[0]] = args[1].strip()
         elif args[0] in ['low_mem_multicore_nlo_generation']:	    
             if six.PY3 and self.options['OLP'] != 'MadLoop':
