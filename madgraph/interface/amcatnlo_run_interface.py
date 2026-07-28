@@ -1777,6 +1777,12 @@ class aMCatNLOCmd(CmdExtended, HelpToCmd, CompleteForCmd, common_run.CommonRunCm
             misc.open_file(os.path.join(self.me_dir, 'crossx.html'))
             self.options['automatic_html_opening'] = False
 
+        try:
+            self.run_generate_events(mode, options, argss, switch)
+        except cluster.CheckpointExit as e:
+            logger.info(str(e))
+            return
+
         if '+' in mode:
             mode = mode.split('+')[0]
         self.compile(mode, options) 
@@ -1932,9 +1938,19 @@ class aMCatNLOCmd(CmdExtended, HelpToCmd, CompleteForCmd, common_run.CommonRunCm
             # loop over the integration steps. After every step, check
             # if we have the required accuracy. If this is the case,
             # stop running, else do another step.
+            continue_step = options.get('continue_step')
             while True:
                 integration_step=integration_step+1
-                self.run_all_jobs(jobs_to_run,integration_step)
+                if continue_step is not None and integration_step < continue_step:
+                    continue
+                if continue_step is not None and integration_step == continue_step:
+                    # Load checkpoint job IDs and wait for them to finish.
+                    self.cluster.load_jobs_from_disk()
+                    self.cluster.submitted = len(self.cluster.submitted_ids)
+                    run_type = 'Fixed order integration step %s' % integration_step
+                    self.wait_for_complete(run_type)
+                else:
+                    self.run_all_jobs(jobs_to_run,integration_step)
                 self.collect_log_files(jobs_to_run,integration_step)
                 jobs_to_run,jobs_to_collect=self.collect_the_results(options,req_acc,jobs_to_run, \
                                   jobs_to_collect,integration_step,mode,mode_dict[mode])
@@ -1997,11 +2013,21 @@ class aMCatNLOCmd(CmdExtended, HelpToCmd, CompleteForCmd, common_run.CommonRunCm
 
 
             # Main loop over the three MINT generation steps:
+            continue_step = options.get('continue_step')
             for mint_step, status in enumerate(mcatnlo_status):
                 if options['only_generation'] and mint_step < 2:
                     continue
+                if continue_step is not None and mint_step < continue_step:
+                    continue
                 self.update_status(status, level='parton')
-                self.run_all_jobs(jobs_to_run,mint_step,fixed_order=False)
+                if continue_step is not None and mint_step == continue_step:
+                    # Load checkpoint job IDs and wait for them to finish.
+                    self.cluster.load_jobs_from_disk()
+                    self.cluster.submitted = len(self.cluster.submitted_ids)
+                    run_type = 'MINT step %s' % mint_step
+                    self.wait_for_complete(run_type)
+                else:
+                    self.run_all_jobs(jobs_to_run,mint_step,fixed_order=False)
                 self.collect_log_files(jobs_to_run,mint_step)
                 jobs_to_run,jobs_to_collect=self.collect_the_results(options,req_acc,jobs_to_run, \
                                 jobs_to_collect,mint_step,mode,mode_dict[mode],fixed_order=False)
@@ -3134,6 +3160,8 @@ RESTART = %(mint_mode)s
              o.  Always remove all the G*_* files (from split event generation).
              o.  Remove the G* (or born_G* or all_G*) only when NOT doing only_generation or reweight_only."""
         if options['reweightonly']:
+            return
+        if options.get('continue_step') is not None:
             return
         if not options['only_generation']:
             self.update_status('Cleaning previous results', level=None)
@@ -4876,6 +4904,8 @@ RESTART = %(mint_mode)s
                       starttime=starttime, level='parton', update_results=True)
         try:
             self.cluster.wait(self.me_dir, update_status)
+        except cluster.CheckpointExit:
+            raise
         except:
             self.cluster.remove()
             raise
@@ -5823,6 +5853,9 @@ _launch_parser.add_option("-R", "--reweight", default=False, dest='do_reweight',
                             help="Run the reweight module (reweighting by different model parameters)")
 _launch_parser.add_option("-M", "--madspin", default=False, dest='do_madspin', action='store_true',
                             help="Run the madspin package")
+_launch_parser.add_option("--continue-step", default=None, type='int', dest='continue_step',
+                            help="Continue the calculation from a given integration step (0-3). " +
+                                 "Requires checkpoint_jobs.txt in the current directory.")
 
 
 

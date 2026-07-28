@@ -50,6 +50,9 @@ class ClusterManagmentError(MadGraph5Error):
 class NotImplemented(MadGraph5Error):
     pass
 
+class CheckpointExit(Exception):
+    pass
+
 
 multiple_try = misc.multiple_try
 pjoin = os.path.join
@@ -61,12 +64,12 @@ def check_interupt(error=KeyboardInterrupt):
         def deco_f_interupt(self, *args, **opt):
             try:
                 return f(self, *args, **opt)
+            except CheckpointExit:
+                raise
             except error:
-                try:
-                    self.remove(*args, **opt)
-                except Exception:
-                    pass
-                raise error
+                raise CheckpointExit(
+                    'Ctrl+C received. Jobs are still running on the cluster.\n'
+                    'Use --continue-step to resume.')
         return deco_f_interupt
     return deco_interupt
 
@@ -327,6 +330,8 @@ class Cluster(object):
             old_mode = mode
             nb_iter += 1
             idle, run, finish, fail = self.control(me_dir)
+            if self.submitted_ids:
+                self.save_jobs_to_disk()
             if nb_job:
                 if  idle + run + finish + fail != nb_job:
                     nb_job = idle + run + finish + fail
@@ -396,6 +401,28 @@ Press ctrl-C to force the update.''' % self.options['cluster_status_update'][0])
         self.submitted_ids = []
         self.id_to_packet = {}
         
+    def save_jobs_to_disk(self, path=None):
+        """Save submitted_ids to checkpoint_jobs.txt in the current (or given) directory."""
+        if path is None:
+            path = os.getcwd()
+        filepath = pjoin(path, 'checkpoint_jobs.txt')
+        with open(filepath, 'w') as f:
+            for job_id in self.submitted_ids:
+                f.write('%s\n' % job_id)
+        logger.debug('Checkpoint: %d job IDs saved to %s' % (len(self.submitted_ids), filepath))
+
+    def load_jobs_from_disk(self, path=None):
+        """Load job IDs from checkpoint_jobs.txt into self.submitted_ids."""
+        if path is None:
+            path = os.getcwd()
+        filepath = pjoin(path, 'checkpoint_jobs.txt')
+        if not os.path.exists(filepath):
+            raise ClusterManagmentError(
+                'Checkpoint file not found: %s\nRun cannot continue.' % filepath)
+        with open(filepath, 'r') as f:
+            self.submitted_ids = [line.strip() for line in f if line.strip()]
+        logger.debug('Checkpoint: loaded %d job IDs from %s' % (len(self.submitted_ids), filepath))
+
     def check_termination(self, job_id):
         """Check the termination of the jobs with job_id and relaunch it if needed."""
         
