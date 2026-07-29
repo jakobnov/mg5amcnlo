@@ -13,7 +13,7 @@ done
 export DMTCP_CHECKPOINT_DIR="$RUN_DIR/dmtcp_$SLURM_JOB_ID"
 mkdir -p "$DMTCP_CHECKPOINT_DIR"
 
-dmtcp_coordinator -i 86400 --daemon --exit-on-last -p 0 --port-file "$DMTCP_CHECKPOINT_DIR/dmtcp.port" 1>/dev/null 2>&1
+dmtcp_coordinator -i 14400 --daemon --exit-on-last -p 0 --port-file "$DMTCP_CHECKPOINT_DIR/dmtcp.port" 1>/dev/null 2>&1
 export DMTCP_COORD_HOST=$(hostname)
 export DMTCP_COORD_PORT=$(cat "$DMTCP_CHECKPOINT_DIR/dmtcp.port")
 
