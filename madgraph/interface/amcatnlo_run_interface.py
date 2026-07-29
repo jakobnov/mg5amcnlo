@@ -1777,16 +1777,14 @@ class aMCatNLOCmd(CmdExtended, HelpToCmd, CompleteForCmd, common_run.CommonRunCm
             misc.open_file(os.path.join(self.me_dir, 'crossx.html'))
             self.options['automatic_html_opening'] = False
 
+        if '+' in mode:
+            mode = mode.split('+')[0]
+        self.compile(mode, options)
         try:
-            self.run_generate_events(mode, options, argss, switch)
+            evt_file = self.run(mode, options)
         except cluster.CheckpointExit as e:
             logger.info(str(e))
             return
-
-        if '+' in mode:
-            mode = mode.split('+')[0]
-        self.compile(mode, options) 
-        evt_file = self.run(mode, options)
         
         if self.run_card['nevents'] == 0 and not mode in ['LO', 'NLO']:
             logger.info('No event file generated: grids have been set-up with a '\
