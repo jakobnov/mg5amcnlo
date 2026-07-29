@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# setup ATLAS environment and LCG release
+if [[ -z ${ATLAS_LOCAL_ROOT_BASE+x} ]]; then
+		export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+fi
+source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
+
+lsetup "views LCG_109a_ATLAS_13 x86_64-el9-gcc15-opt"
+
 export PATH="$DMTCP_PATH/bin:$PATH"
 export LD_LIBRARY_PATH="$DMTCP_PATH/lib:$LD_LIBRARY_PATH"
 
