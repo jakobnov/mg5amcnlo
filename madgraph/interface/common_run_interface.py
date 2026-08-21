@@ -3598,6 +3598,8 @@ class CommonRunCmd(HelpToCmd, CheckValidForCmd, cmd.Cmd):
                 to_do = False
             if to_do and args[1] != 'None':
                 self.options['lhapdf'] = args[1]
+        elif args[0] == 'setup_env':
+            self.options[args[0]] = ' '.join(a for a in args[1:] if not a.startswith('--')).strip()
         elif args[0] in self.options:
             if args[1] in ['None','True','False']:
                 self.options[args[0]] = ast.literal_eval(args[1])

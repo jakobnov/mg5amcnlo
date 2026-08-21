@@ -8097,8 +8097,10 @@ in the MG5aMC option 'samurai' (instead of leaving it to its default 'auto')."""
         elif args[0] in ['zerowidth_tchannel']:
             self.options[args[0]] = banner_module.ConfigFile.format_variable(args[1], bool, args[0])
         elif args[0] in ['cluster_queue', 'cluster_walltime', 'checkpointing',\
-                         'cluster_requirement', 'cluster_vacatetime', 'enforce_shared_disk', 'setup_env']:
+                         'cluster_requirement', 'cluster_vacatetime', 'enforce_shared_disk']:
             self.options[args[0]] = args[1].strip()
+        elif args[0] == 'setup_env':
+            self.options[args[0]] = ' '.join(a for a in args[1:] if not a.startswith('--')).strip()
         elif args[0] in ['low_mem_multicore_nlo_generation']:	    
             if six.PY3 and self.options['OLP'] != 'MadLoop':
                 raise self.InvalidCmd('Not possible to set \"low_mem_multicore_nlo_generation\" for an OLP different of MadLoop when running  python3')
