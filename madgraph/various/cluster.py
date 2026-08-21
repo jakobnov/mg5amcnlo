@@ -2002,7 +2002,10 @@ class SLURMCluster(Cluster):
         jobenv = os.environ.copy()
         if MADEVENT: jobenv['RUN_DIR'] = LOCALDIR
         else: jobenv['RUN_DIR'] = MG5DIR
-        if self.checkpointing: jobenv['DMTCP_PATH'] = self.options['dmtcp']
+        if self.checkpointing:
+            jobenv['DMTCP_PATH'] = self.options['dmtcp']
+            if 'setup_env' in self.options and self.options['setup_env'] and self.options['setup_env'] != 'None':
+                jobenv['SETUP_ENV'] = self.options['setup_env']
 
         a = misc.Popen(command, stdout=subprocess.PIPE, 
                                       stderr=subprocess.STDOUT,

@@ -2978,6 +2978,7 @@ class MadGraphCmd(HelpToCmd, CheckValidForCmd, CompleteForCmd, CmdExtended):
                        'cluster_status_update': (600, 30),
                        'cluster_walltime': None,
                        'cluster_requirement': None,
+                       'setup_env': None,
                        'cluster_vacatetime': '120',
                        'enforce_shared_disk': False,
                        'fastjet':'fastjet-config',
@@ -7706,7 +7707,7 @@ in the MG5aMC option 'samurai' (instead of leaving it to its default 'auto')."""
                                 continue
                             to_define[key] = self.options[key]
                         elif key in ['cluster_queue', 'cluster_walltime',\
-                                     'cluster_requirement', 'cluster_vacatetime']\
+                                     'cluster_requirement', 'cluster_vacatetime', 'setup_env']\
                                      and self.options[key] is None:
                             to_define[key] = self.options[key]
     
@@ -8096,7 +8097,7 @@ in the MG5aMC option 'samurai' (instead of leaving it to its default 'auto')."""
         elif args[0] in ['zerowidth_tchannel']:
             self.options[args[0]] = banner_module.ConfigFile.format_variable(args[1], bool, args[0])
         elif args[0] in ['cluster_queue', 'cluster_walltime', 'checkpointing',\
-                         'cluster_requirement', 'cluster_vacatetime', 'enforce_shared_disk']:
+                         'cluster_requirement', 'cluster_vacatetime', 'enforce_shared_disk', 'setup_env']:
             self.options[args[0]] = args[1].strip()
         elif args[0] in ['low_mem_multicore_nlo_generation']:	    
             if six.PY3 and self.options['OLP'] != 'MadLoop':

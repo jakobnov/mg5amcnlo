@@ -130,6 +130,7 @@
 # cluster_requirement = x86_64-v4 # selected microarchitecture for checkpointing consistency
 # cluster_vacatetime = 120 # time in seconds for checkpoint creation before the job removal/requeuing
 # enforce_shared_disk = True # enforce shared disk I/O (this setting is currently only relevant for Condor)
+# setup_env = "lsetup 'views LCG_109a_ATLAS_13 x86_64-el9-gcc15-opt'" # setup the environment
 
 #! Path to a node directory to avoid direct writing on the central disk
 #!  Note that condor clusters avoid direct writing by default (therefore this
